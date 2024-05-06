@@ -77,6 +77,7 @@ export function parsePage(path: string, contents: string, stat: FileStats, metad
         aliases,
         links,
         lists: markdownData.lists,
+        headings: metadata.headings,
         fields: finalizeInlineFields(fields),
         frontmatter: frontmatter,
         ctime: DateTime.fromMillis(stat.ctime),

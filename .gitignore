@@ -29,3 +29,5 @@ test-vault/untracked/*
 
 lib
 yarn.lock
+
+**/*.bak

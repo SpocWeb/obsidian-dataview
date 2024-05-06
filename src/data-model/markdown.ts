@@ -5,6 +5,7 @@ import { Literal, Link, Values } from "data-model/value";
 import { DataObject } from "index";
 import { SListItem, SMarkdownPage } from "data-model/serialized/markdown";
 import { Pos } from "obsidian";
+import { HeadingCache } from "obsidian";
 
 /** All extracted markdown file metadata obtained from a file. */
 export class PageMetadata {
@@ -26,6 +27,8 @@ export class PageMetadata {
     public tags: Set<string>;
     /** All of the aliases defined for this file. */
     public aliases: Set<string>;
+    /** List of all Headings in Document-Order, to be able to query them even without List Items */
+    headings: HeadingCache[];
     /** All OUTGOING links (including embeds, header + block links) in this file. */
     public links: Link[];
     /** All list items contained within this page. Filter for tasks to get just tasks. */
@@ -134,6 +137,17 @@ export class PageMetadata {
                 etags: Array.from(this.tags),
                 tags: Array.from(this.fullTags()),
                 aliases: Array.from(this.aliases),
+                headings: this.headings.map(h => "#".repeat(h.level) + " " + h.heading + " @["
+                    + h.position.start.line + ":"
+                    + h.position.start.offset + ".."
+                    + h.position.end.offset + "]"), /*{
+                    const heading: HeadingCache = {
+                        heading: h.heading,
+                        level: h.level,
+                        position: h.position
+                    }
+                    return heading;
+                }),*/
                 lists: this.lists.map(l => realCache.get(l.line)),
                 tasks: this.lists.filter(l => !!l.task).map(l => realCache.get(l.line)),
                 ctime: this.ctime,
