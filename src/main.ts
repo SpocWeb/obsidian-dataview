@@ -12,7 +12,7 @@ import {
 import { renderErrorPre } from "ui/render";
 import { FullIndex } from "data-index/index";
 import { parseField } from "expression/parse";
-import { tryOrPropogate } from "util/normalize";
+import { tryOrPropagate } from "util/normalize";
 import { DataviewApi, isDataviewDisabled } from "api/plugin-api";
 import { DataviewSettings, DEFAULT_QUERY_SETTINGS, DEFAULT_SETTINGS } from "settings";
 import { DataviewInlineRenderer } from "ui/views/inline-view";
@@ -161,6 +161,21 @@ export default class DataviewPlugin extends Plugin {
                 });
             })
         );
+
+        this.registerDataviewjsCodeHighlighting();
+        this.register(() => this.unregisterDataviewjsCodeHighlighting());
+    }
+
+    public registerDataviewjsCodeHighlighting(): void {
+        window.CodeMirror.defineMode(this.settings.dataviewJsKeyword, config =>
+            window.CodeMirror.getMode(config, "javascript")
+        );
+    }
+
+    public unregisterDataviewjsCodeHighlighting(): void {
+        window.CodeMirror.defineMode(this.settings.dataviewJsKeyword, config =>
+            window.CodeMirror.getMode(config, "null")
+        );
     }
 
     private debouncedRefresh: () => void = () => null;
@@ -264,7 +279,7 @@ export default class DataviewPlugin extends Plugin {
                 let potentialField = text.substring(this.settings.inlineQueryPrefix.length).trim();
                 if (potentialField.length == 0) continue;
 
-                let field = tryOrPropogate(() => parseField(potentialField));
+                let field = tryOrPropagate(() => parseField(potentialField));
                 if (!field.successful) {
                     let errorBlock = el.createEl("div");
                     renderErrorPre(errorBlock, `Dataview (inline field '${potentialField}'): ${field.error}`);
@@ -316,7 +331,6 @@ class GeneralSettingsTab extends PluginSettingTab {
 
     public display(): void {
         this.containerEl.empty();
-        this.containerEl.createEl("h2", { text: "General settings" });
 
         new Setting(this.containerEl)
             .setName("Enable inline queries")
@@ -366,7 +380,7 @@ class GeneralSettingsTab extends PluginSettingTab {
                 })
             );
 
-        this.containerEl.createEl("h2", { text: "Codeblock settings" });
+        new Setting(this.containerEl).setName("Codeblocks").setHeading();
 
         new Setting(this.containerEl)
             .setName("DataviewJS keyword")
@@ -379,7 +393,9 @@ class GeneralSettingsTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.dataviewJsKeyword)
                     .onChange(async value => {
                         if (value.length == 0) return;
+                        this.plugin.unregisterDataviewjsCodeHighlighting();
                         await this.plugin.updateSettings({ dataviewJsKeyword: value });
+                        this.plugin.registerDataviewjsCodeHighlighting();
                     })
             );
 
@@ -420,8 +436,7 @@ class GeneralSettingsTab extends PluginSettingTab {
                     .onChange(async value => await this.plugin.updateSettings({ inlineQueriesInCodeblocks: value }))
             );
 
-        this.containerEl.createEl("h2", { text: "View settings" });
-        this.containerEl.createEl("h3", { text: "General" });
+        new Setting(this.containerEl).setName("View").setHeading();
 
         new Setting(this.containerEl)
             .setName("Display result count")
@@ -530,7 +545,7 @@ class GeneralSettingsTab extends PluginSettingTab {
                     })
             );
 
-        this.containerEl.createEl("h3", { text: "Table settings" });
+        new Setting(this.containerEl).setName("Tables").setHeading();
 
         new Setting(this.containerEl)
             .setName("Primary column name")
@@ -563,7 +578,7 @@ class GeneralSettingsTab extends PluginSettingTab {
                     })
             );
 
-        this.containerEl.createEl("h3", { text: "Task settings" });
+        new Setting(this.containerEl).setName("Tasks").setHeading();
 
         let taskCompletionSubsettingsEnabled = this.plugin.settings.taskCompletionTracking;
         let taskCompletionInlineSubsettingsEnabled =
