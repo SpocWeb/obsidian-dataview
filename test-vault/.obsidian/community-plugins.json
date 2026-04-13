@@ -1,4 +1,6 @@
 [
   "hot-reload",
-  "dataview"
+  "dataview",
+  "obsidian-heading-shifter",
+  "wikidata-importer"
 ]
